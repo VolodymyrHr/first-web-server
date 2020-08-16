@@ -20,36 +20,88 @@ namespace first_web_server
 {
     public class Startup
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         static string[] who = new string[] { "Kate", "Tom", "Mike", "Олег", "Товариш" };
         static string[] how = new string[] { "good", "beautiful", "awful", "incredibly", "впевнено" };
         static string[] does = new string[] { "swim", "jump", "walk", "співає", "водить" };
         static string[] what = new string[] { "car", "river", "bridge", "класику", "змагання" };
+        static string[] incampUrls = new string[] { "http://localhost:5000", "http://localhost:8084" };
 
-        Dictionary<string, string[]> map = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what } };
+        Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what } };
 
-        private string randomWord(string kay)
+        private string randomStrValue(string[] strValues)
+        {
+            Random r = new Random();
+            return strValues[r.Next(strValues.Length)];
+        }
+        private string generateSentence()
+        {
+            return $"{getRandomWord("who")} {getRandomWord("how")} {getRandomWord("does")} {getRandomWord("what")}";
+        }
+
+        private string getSentence(Dictionary<string, string> words)
+        {
+            Dictionary<string, string>.ValueCollection valueColl = words.Values;
+            string sentence = null;
+
+            foreach (string word in valueColl)
+            {
+                sentence += $"{word} ";
+            }
+
+            return "\n" + sentence;
+        }
+
+        private string getStrList(Dictionary<string, string> dataList, string title)
+        {
+            string list = "\n" + title;
+
+            foreach (KeyValuePair<string, string> kvp in dataList)
+            {
+                list += $"\nВід - {kvp.Key} отримали - {kvp.Value}";
+            }
+
+            return list;
+        }
+
+        private string getRandomWord(string kay)
         {
             string[] words;
-            if (map.TryGetValue(kay, out words))
-            {
-                Random r = new Random();
-                int index = r.Next(words.Length);
-                return words[index];
-            }
-            else
-            {
-                return $"error 404 стоінка /{kay} незнайдена";
-            }// else 404
+
+            return (localMap.TryGetValue(kay, out words)) ? randomStrValue(words) : null;
         }
-        private string generateSentenses()
+
+        private string getIncampSentence()
         {
-            return $"{randomWord("who")} {randomWord("how")} {randomWord("does")} {randomWord("what")}";
+            Dictionary<string, string> requestList = new Dictionary<string, string>();
+            Dictionary<string, string> erorsList = new Dictionary<string, string>();
+
+            Dictionary<string, string[]>.KeyCollection keyColl = localMap.Keys;
+
+            string sentence = null;
+            string report = null;
+            string reportErrors = null;
+
+            foreach (string key in keyColl)
+            {
+                Tuple<string, string> respons = new Tuple<string, string>(null, null);
+                while (respons.Item2 == null)
+                {
+                    if (erorsList.Count <= 2 && respons.Item1 != null)
+                    {
+                        erorsList.TryAdd(respons.Item1, "Не відповідає");
+                    }
+                        respons = doRequest($"{randomStrValue(incampUrls)}/{key}");
+                }
+                requestList.Add(respons.Item1, respons.Item2);
+            }
+
+            sentence = getSentence(requestList);
+            report = getStrList(requestList, "Successful requests:");
+            reportErrors = getStrList(erorsList, "Errors:");
+
+            return string.Concat(sentence, report, reportErrors);
         }
 
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -64,61 +116,83 @@ namespace first_web_server
                 endpoints.MapGet("/", async context =>
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
-                    await context.Response.WriteAsync("Hello :)", Encoding.UTF8);
+                    await context.Response.WriteAsync("Hello :)");
                 });
 
                 endpoints.MapGet("/{way:alpha}", async context => //*****************
                 {
                     var way = context.Request.RouteValues["way"];
+                    string word = getRandomWord(way.ToString());
+
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(randomWord(way.ToString()));
+
+                    if (word == null)
+                    {
+                        context.Response.StatusCode = 404;
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync(word);
+                    }
+
                 });
 
                 endpoints.MapGet("/quote", async context =>
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(generateSentenses());
+                    await context.Response.WriteAsync(generateSentence());
                 });
 
                 endpoints.MapGet("/incamp18-quote", async context =>
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(generateSentenses());
+                    await context.Response.WriteAsync(getIncampSentence());
                 });
 
-                endpoints.MapGet("/test", async context =>
-                {
-                    await context.Response.WriteAsync(getRequest());
-                });
             });
         }
 
 
-        public string getRequest()
+        public Tuple<string, string> doRequest(string urlForRequest)
         {
-            string responseFromServer;
-
-            WebRequest request = WebRequest.Create("http://972f647d75a1.ngrok.io/who");
-            request.Credentials = CredentialCache.DefaultCredentials;
-
-            WebResponse response = request.GetResponse();
-
-            using (Stream dataStream = response.GetResponseStream())
+            try
             {
+                WebRequest request = WebRequest.Create(urlForRequest);
 
-                StreamReader reader = new StreamReader(dataStream, Encoding.UTF8);
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
-                responseFromServer = reader.ReadToEnd();
+                Stream dataStream = response.GetResponseStream();
 
-                Console.WriteLine(responseFromServer);
+                StreamReader reader = new StreamReader(dataStream);
+
+                string responseFromServer = reader.ReadToEnd();
+
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+                return new Tuple<string, string>(urlForRequest, responseFromServer);
             }
+            catch (WebException e)
+            {
+                Console.WriteLine("This program is expected to throw WebException on successful run." +
+                                    "\n\nException Message :" + e.Message);
+                if (e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
+                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
+                }
 
+                return new Tuple<string, string>(urlForRequest, null);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
 
-            response.Close();
-            return $"{responseFromServer}";
+                return new Tuple<string, string>(urlForRequest, null);
+            }
         }
     }
 }
