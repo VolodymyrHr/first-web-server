@@ -86,18 +86,18 @@ namespace first_web_server
                 Tuple<string, string> respons = new Tuple<string, string>(null, null);
                 while (respons.Item2 == null)
                 {
-                    if (erorsList.Count <= 2 && respons.Item1 != null)
+                    if (respons.Item1 != null)
                     {
-                        erorsList.TryAdd(respons.Item1, "Не відповідає");
+                        erorsList.TryAdd(respons.Item1, "404");
                     }
                         respons = doRequest($"{randomStrValue(incampUrls)}/{key}");
                 }
                 requestList.Add(respons.Item1, respons.Item2);
             }
 
-            sentence = getSentence(requestList);
-            report = getStrList(requestList, "Successful requests:");
-            reportErrors = getStrList(erorsList, "Errors:");
+            sentence = (requestList.Count > 0)? getSentence(requestList) : "Incamp18 не відповідає";
+            report = (requestList.Count > 0)? getStrList(requestList, "Successful requests:") : "\nSuccessful requests: -";
+            reportErrors = (erorsList.Count > 0)? getStrList(erorsList, "Errors:") : "\nErrors: -";
 
             return string.Concat(sentence, report, reportErrors);
         }
