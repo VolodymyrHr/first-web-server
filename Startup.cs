@@ -20,24 +20,20 @@ namespace first_web_server
 {
     public class Startup
     {
-        static string[] who = new string[] { "Kate", "Tom", "Mike", "Олег", "Товариш" };
-        static string[] how = new string[] { "good", "beautiful", "awful", "incredibly", "впевнено" };
-        static string[] does = new string[] { "swim", "jump", "walk", "співає", "водить" };
-        static string[] what = new string[] { "car", "river", "bridge", "класику", "змагання" };
+        static string[] who = new string[] { "Аліса", "Вовк", "Степан", "Олег", "Товариш", "Гусь", "Дятел" };
+        static string[] how = new string[] { "гарно", "незабутньо", "жахливо", "неймовірно", "впевнено", "швидко", "задумливо", "проворно" };
+        static string[] does = new string[] { "плаває", "стрибає", "плаче", "співає", "водить", "заводить", "заповза", "заліта", "зносить", "розносить" };
+        static string[] what = new string[] { "машину", "в річкі", "міст", "класику", "за руку", "під стіл", "напої" };
+        // static string[] forWho = new string[] {"мені", "тобі", "собі", "їм"};
         static string[] incampUrls = new string[] { "http://localhost:5000", "http://localhost:8084" };
 
-        Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what } };
-
+        Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what }, /*{ "forWho", forWho}*/ };
+        
         private string randomStrValue(string[] strValues)
         {
             Random r = new Random();
             return strValues[r.Next(strValues.Length)];
         }
-        private string generateSentence()
-        {
-            return $"{getRandomWord("who")} {getRandomWord("how")} {getRandomWord("does")} {getRandomWord("what")}";
-        }
-
         private string getSentence(Dictionary<string, string> words)
         {
             Dictionary<string, string>.ValueCollection valueColl = words.Values;
@@ -70,6 +66,16 @@ namespace first_web_server
             return (localMap.TryGetValue(kay, out words)) ? randomStrValue(words) : null;
         }
 
+        private string generateSentence(Dictionary<string, string[]> map)
+        {
+            Dictionary<string, string> words = new Dictionary<string, string>();
+            foreach (KeyValuePair<string, string[]> item in map)
+            {
+                words.Add(item.Key, randomStrValue(item.Value));
+            }
+            return getSentence(words);
+        }
+
         private string getIncampSentence()
         {
             Dictionary<string, string> requestList = new Dictionary<string, string>();
@@ -90,14 +96,14 @@ namespace first_web_server
                     {
                         erorsList.TryAdd(respons.Item1, "404");
                     }
-                        respons = doRequest($"{randomStrValue(incampUrls)}/{key}");
+                    respons = doRequest($"{randomStrValue(incampUrls)}/{key}");
                 }
                 requestList.Add(respons.Item1, respons.Item2);
             }
 
-            sentence = (requestList.Count > 0)? getSentence(requestList) : "Incamp18 не відповідає";
-            report = (requestList.Count > 0)? getStrList(requestList, "Successful requests:") : "\nSuccessful requests: -";
-            reportErrors = (erorsList.Count > 0)? getStrList(erorsList, "Errors:") : "\nErrors: -";
+            sentence = (requestList.Count > 0) ? getSentence(requestList) : "Incamp18 не відповідає";
+            report = (requestList.Count > 0) ? getStrList(requestList, "Successful requests:") : "\nSuccessful requests: -";
+            reportErrors = (erorsList.Count > 0) ? getStrList(erorsList, "Errors:") : "\nErrors: -";
 
             return string.Concat(sentence, report, reportErrors);
         }
@@ -142,7 +148,7 @@ namespace first_web_server
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(generateSentence());
+                    await context.Response.WriteAsync(generateSentence(localMap));
                 });
 
                 endpoints.MapGet("/incamp18-quote", async context =>
