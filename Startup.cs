@@ -25,10 +25,21 @@ namespace first_web_server
         static string[] does = new string[] { "плаває", "стрибає", "плаче", "співає", "водить", "заводить", "заповза", "заліта", "зносить", "розносить" };
         static string[] what = new string[] { "машину", "в річкі", "міст", "класику", "за руку", "під стіл", "напої" };
         // static string[] forWho = new string[] {"мені", "тобі", "собі", "їм"};
-        static string[] incampUrls = new string[] { "http://localhost:5000", "http://localhost:8084" };
+        static string[] incampUrls = new string[] { "http://37b572c8bf35.ngrok.io/",
+                                                    "http://12f1a14e7e50.ngrok.io/",
+                                                    "http://fd7ff832839b.ngrok.io/",
+                                                    "http://e77fd3b7ed59.ngrok.io/",
+                                                    "http://a089177a583a.ngrok.io/",
+                                                    "http://aba617d86eae.ngrok.io/",
+                                                    "http://17f7ddd05769.ngrok.io/",
+                                                    "http://ef845d6343d7.ngrok.io/",
+                                                    "http://5e9e572e07b3.ngrok.io/",
+                                                    "http://67e5aa89deb6.ngrok.io/",
+                                                    "http://8a2f59ef9085.ngrok.io/",
+                                                    "http://42df319f71e8.ngrok.io/" };
 
         Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what }, /*{ "forWho", forWho}*/ };
-        
+
         private string randomStrValue(string[] strValues)
         {
             Random r = new Random();
@@ -96,7 +107,7 @@ namespace first_web_server
                     {
                         erorsList.TryAdd(respons.Item1, "404");
                     }
-                    respons = doRequest($"{randomStrValue(incampUrls)}/{key}");
+                    respons = doRequest($"{randomStrValue(incampUrls)}{key}");
                 }
                 requestList.Add(respons.Item1, respons.Item2);
             }
@@ -106,6 +117,47 @@ namespace first_web_server
             reportErrors = (erorsList.Count > 0) ? getStrList(erorsList, "Errors:") : "\nErrors: -";
 
             return string.Concat(sentence, report, reportErrors);
+        }
+
+        public Tuple<string, string> doRequest(string urlForRequest)
+        {
+            try
+            {
+                WebRequest request = WebRequest.Create(urlForRequest);
+
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                Stream dataStream = response.GetResponseStream();
+
+                StreamReader reader = new StreamReader(dataStream);
+
+                string responseFromServer = reader.ReadToEnd();
+                string header = response.Headers.Get("InCamp-Student");
+
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+
+                return new Tuple<string, string>(urlForRequest + ": " + header, responseFromServer);
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("This program is expected to throw WebException on successful run." +
+                                    "\n\nException Message :" + e.Message);
+                if (e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
+                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
+                }
+
+                return new Tuple<string, string>(urlForRequest, null);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+
+                return new Tuple<string, string>(urlForRequest, null);
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -125,7 +177,7 @@ namespace first_web_server
                     await context.Response.WriteAsync("Hello :)");
                 });
 
-                endpoints.MapGet("/{way:alpha}", async context => //*****************
+                endpoints.MapGet("/{way}", async context =>
                 {
                     var way = context.Request.RouteValues["way"];
                     string word = getRandomWord(way.ToString());
@@ -162,43 +214,6 @@ namespace first_web_server
         }
 
 
-        public Tuple<string, string> doRequest(string urlForRequest)
-        {
-            try
-            {
-                WebRequest request = WebRequest.Create(urlForRequest);
-
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                Stream dataStream = response.GetResponseStream();
-
-                StreamReader reader = new StreamReader(dataStream);
-
-                string responseFromServer = reader.ReadToEnd();
-
-                reader.Close();
-                dataStream.Close();
-                response.Close();
-                return new Tuple<string, string>(urlForRequest, responseFromServer);
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine("This program is expected to throw WebException on successful run." +
-                                    "\n\nException Message :" + e.Message);
-                if (e.Status == WebExceptionStatus.ProtocolError)
-                {
-                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
-                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
-                }
-
-                return new Tuple<string, string>(urlForRequest, null);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-
-                return new Tuple<string, string>(urlForRequest, null);
-            }
-        }
+        
     }
 }
