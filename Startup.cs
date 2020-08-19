@@ -25,18 +25,20 @@ namespace first_web_server
         static string[] does = new string[] { "плаває", "стрибає", "плаче", "співає", "водить", "заводить", "заповза", "заліта", "зносить", "розносить" };
         static string[] what = new string[] { "машину", "в річкі", "міст", "класику", "за руку", "під стіл", "напої" };
         // static string[] forWho = new string[] {"мені", "тобі", "собі", "їм"};
-        static string[] incampUrls = new string[] { "http://37b572c8bf35.ngrok.io/",
-                                                    "http://12f1a14e7e50.ngrok.io/",
-                                                    "http://fd7ff832839b.ngrok.io/",
-                                                    "http://e77fd3b7ed59.ngrok.io/",
-                                                    "http://a089177a583a.ngrok.io/",
-                                                    "http://aba617d86eae.ngrok.io/",
-                                                    "http://17f7ddd05769.ngrok.io/",
-                                                    "http://ef845d6343d7.ngrok.io/",
-                                                    "http://5e9e572e07b3.ngrok.io/",
-                                                    "http://67e5aa89deb6.ngrok.io/",
-                                                    "http://8a2f59ef9085.ngrok.io/",
-                                                    "http://42df319f71e8.ngrok.io/" };
+        // static string[] incampUrls = new string[] { "http://37b572c8bf35.ngrok.io/",
+        //                                             "http://12f1a14e7e50.ngrok.io/",
+        //                                             "http://fd7ff832839b.ngrok.io/",
+        //                                             "http://e77fd3b7ed59.ngrok.io/",
+        //                                             "http://a089177a583a.ngrok.io/",
+        //                                             "http://aba617d86eae.ngrok.io/",
+        //                                             "http://17f7ddd05769.ngrok.io/",
+        //                                             "http://ef845d6343d7.ngrok.io/",
+        //                                             "http://5e9e572e07b3.ngrok.io/",
+        //                                             "http://67e5aa89deb6.ngrok.io/",
+        //                                             "http://8a2f59ef9085.ngrok.io/",
+        //                                             "http://42df319f71e8.ngrok.io/" };
+        static string[] incampUrls = new string[] { "http://localhost:5000/",
+                                                    "http://localhost:8084/" };
 
         Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what }, /*{ "forWho", forWho}*/ };
 
@@ -213,7 +215,55 @@ namespace first_web_server
             });
         }
 
+        public async Task<string> doRequestAsync(string urlForRequest)
+        {
+            string responseFromServer;
+            string header;
 
-        
+            try
+            {
+                WebRequest request = (HttpWebRequest)WebRequest.Create(urlForRequest);
+
+                using (WebResponse response = await request.GetResponseAsync())
+                {
+                    using (Stream responseStream = response.GetResponseStream())
+                    {
+                        Stream dataStream = response.GetResponseStream();
+
+                        StreamReader reader = new StreamReader(dataStream);
+
+                        responseFromServer = reader.ReadToEnd();
+                        header = response.Headers.Get("InCamp-Student");
+                    }
+                }
+
+                // WebResponse  response = (HttpWebRequest)request.GetResponseAsync();
+
+                return header+responseFromServer;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("This program is expected to throw WebException on successful run." +
+                                    "\n\nException Message :" + e.Message);
+                if (e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
+                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
+                }
+
+                return null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+
+                return null;
+            }
+        }
+
+        // private async string DoRequestAsync(){
+
+        // }
+
     }
 }
