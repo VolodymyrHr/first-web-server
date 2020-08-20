@@ -121,7 +121,7 @@ namespace first_web_server
             return string.Concat(sentence, report, reportErrors);
         }
 
-        public Tuple<string, string> doRequest(string urlForRequest)
+        private Tuple<string, string> doRequest(string urlForRequest)
         {
             try
             {
@@ -212,7 +212,34 @@ namespace first_web_server
                     await context.Response.WriteAsync(getIncampSentence());
                 });
 
+                endpoints.MapGet("/async", async context =>
+                {
+                    context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
+                    context.Response.ContentType = "text/html; charset=utf-8";
+                    getSentenceAsync();
+                    await context.Response.WriteAsync(getIncampSentence());
+                });
+
             });
+        }
+
+
+        private async void getSentenceAsync()
+        {
+            await getWordsAsync();
+        }
+
+        private async Task getWordsAsync()
+        {
+            Dictionary<string, string[]>.KeyCollection keyColl = localMap.Keys;
+
+            string sentences = null;
+
+            foreach (string key in keyColl)
+            {
+                sentences += await doRequestAsync($"{randomStrValue(incampUrls)}{key}");
+            }
+            Console.WriteLine(sentences);
         }
 
         public async Task<string> doRequestAsync(string urlForRequest)
@@ -232,14 +259,14 @@ namespace first_web_server
 
                         StreamReader reader = new StreamReader(dataStream);
 
-                        responseFromServer = reader.ReadToEnd();
+                        responseFromServer = await reader.ReadToEndAsync();
                         header = response.Headers.Get("InCamp-Student");
                     }
                 }
 
                 // WebResponse  response = (HttpWebRequest)request.GetResponseAsync();
 
-                return header+responseFromServer;
+                return header + responseFromServer;
             }
             catch (WebException e)
             {
@@ -260,10 +287,6 @@ namespace first_web_server
                 return null;
             }
         }
-
-        // private async string DoRequestAsync(){
-
-        // }
 
     }
 }
