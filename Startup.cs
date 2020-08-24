@@ -20,146 +20,23 @@ namespace first_web_server
 {
     public class Startup
     {
-        static string[] who = new string[] { "Аліса", "Вовк", "Степан", "Олег", "Товариш", "Гусь", "Дятел" };
-        static string[] how = new string[] { "гарно", "незабутньо", "жахливо", "неймовірно", "впевнено", "швидко", "задумливо", "проворно" };
-        static string[] does = new string[] { "плаває", "стрибає", "плаче", "співає", "водить", "заводить", "заповза", "заліта", "зносить", "розносить" };
-        static string[] what = new string[] { "машину", "в річкі", "міст", "класику", "за руку", "під стіл", "напої" };
-        // static string[] forWho = new string[] {"мені", "тобі", "собі", "їм"};
-        // static string[] incampUrls = new string[] { "http://37b572c8bf35.ngrok.io/",
-        //                                             "http://12f1a14e7e50.ngrok.io/",
-        //                                             "http://fd7ff832839b.ngrok.io/",
-        //                                             "http://e77fd3b7ed59.ngrok.io/",
-        //                                             "http://a089177a583a.ngrok.io/",
-        //                                             "http://aba617d86eae.ngrok.io/",
-        //                                             "http://17f7ddd05769.ngrok.io/",
-        //                                             "http://ef845d6343d7.ngrok.io/",
-        //                                             "http://5e9e572e07b3.ngrok.io/",
-        //                                             "http://67e5aa89deb6.ngrok.io/",
-        //                                             "http://8a2f59ef9085.ngrok.io/",
-        //                                             "http://42df319f71e8.ngrok.io/" };
-        static string[] incampUrls = new string[] { "http://localhost:5000/",
-                                                    "http://localhost:8084/" };
+        private static string[] incampUrls = new string[] { "http://localhost:5000/",
+                                                            "http://localhost:8084/" };
 
-        Dictionary<string, string[]> localMap = new Dictionary<string, string[]>() { { "who", who }, { "how", how }, { "does", does }, { "what", what }, /*{ "forWho", forWho}*/ };
 
-        private string randomStrValue(string[] strValues)
+        public string ChooseTypeRequest(string[] urls)
         {
-            Random r = new Random();
-            return strValues[r.Next(strValues.Length)];
-        }
-        private string getSentence(Dictionary<string, string> words)
-        {
-            Dictionary<string, string>.ValueCollection valueColl = words.Values;
-            string sentence = null;
-
-            foreach (string word in valueColl)
+            ITypeRequest strategy;
+            if (Program.keys.Length > 0 && Program.keys[0] == "async")
             {
-                sentence += $"{word} ";
+                strategy = new Async();
             }
-
-            return "\n" + sentence;
-        }
-
-        private string getStrList(Dictionary<string, string> dataList, string title)
-        {
-            string list = "\n" + title;
-
-            foreach (KeyValuePair<string, string> kvp in dataList)
+            else
             {
-                list += $"\nВід - {kvp.Key} отримали - {kvp.Value}";
+                strategy = new Sync();
             }
+            return strategy.getIncampSentence(urls);
 
-            return list;
-        }
-
-        private string getRandomWord(string kay)
-        {
-            string[] words;
-
-            return (localMap.TryGetValue(kay, out words)) ? randomStrValue(words) : null;
-        }
-
-        private string generateSentence(Dictionary<string, string[]> map)
-        {
-            Dictionary<string, string> words = new Dictionary<string, string>();
-            foreach (KeyValuePair<string, string[]> item in map)
-            {
-                words.Add(item.Key, randomStrValue(item.Value));
-            }
-            return getSentence(words);
-        }
-
-        private string getIncampSentence()
-        {
-            Dictionary<string, string> requestList = new Dictionary<string, string>();
-            Dictionary<string, string> erorsList = new Dictionary<string, string>();
-
-            Dictionary<string, string[]>.KeyCollection keyColl = localMap.Keys;
-
-            string sentence = null;
-            string report = null;
-            string reportErrors = null;
-
-            foreach (string key in keyColl)
-            {
-                Tuple<string, string> respons = new Tuple<string, string>(null, null);
-                while (respons.Item2 == null)
-                {
-                    if (respons.Item1 != null)
-                    {
-                        erorsList.TryAdd(respons.Item1, "404");
-                    }
-                    respons = doRequest($"{randomStrValue(incampUrls)}{key}");
-                }
-                requestList.Add(respons.Item1, respons.Item2);
-            }
-
-            sentence = (requestList.Count > 0) ? getSentence(requestList) : "Incamp18 не відповідає";
-            report = (requestList.Count > 0) ? getStrList(requestList, "Successful requests:") : "\nSuccessful requests: -";
-            reportErrors = (erorsList.Count > 0) ? getStrList(erorsList, "Errors:") : "\nErrors: -";
-
-            return string.Concat(sentence, report, reportErrors);
-        }
-
-        private Tuple<string, string> doRequest(string urlForRequest)
-        {
-            try
-            {
-                WebRequest request = WebRequest.Create(urlForRequest);
-
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                Stream dataStream = response.GetResponseStream();
-
-                StreamReader reader = new StreamReader(dataStream);
-
-                string responseFromServer = reader.ReadToEnd();
-                string header = response.Headers.Get("InCamp-Student");
-
-                reader.Close();
-                dataStream.Close();
-                response.Close();
-
-                return new Tuple<string, string>(urlForRequest + ": " + header, responseFromServer);
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine("This program is expected to throw WebException on successful run." +
-                                    "\n\nException Message :" + e.Message);
-                if (e.Status == WebExceptionStatus.ProtocolError)
-                {
-                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
-                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
-                }
-
-                return new Tuple<string, string>(urlForRequest, null);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-
-                return new Tuple<string, string>(urlForRequest, null);
-            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -182,7 +59,7 @@ namespace first_web_server
                 endpoints.MapGet("/{way}", async context =>
                 {
                     var way = context.Request.RouteValues["way"];
-                    string word = getRandomWord(way.ToString());
+                    string word = Word.getRandomWord(way.ToString());
 
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
@@ -202,91 +79,85 @@ namespace first_web_server
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(generateSentence(localMap));
+                    await context.Response.WriteAsync(Sentence.generateSentence(DataBase.localMap));
                 });
 
                 endpoints.MapGet("/incamp18-quote", async context =>
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(getIncampSentence());
+                    await context.Response.WriteAsync(ChooseTypeRequest(incampUrls));
                 });
 
-                endpoints.MapGet("/async", async context =>
-                {
-                    context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
-                    context.Response.ContentType = "text/html; charset=utf-8";
-                    getSentenceAsync();
-                    await context.Response.WriteAsync(getIncampSentence());
-                });
+                // endpoints.MapGet("/async", async context =>
+                // {
+                //     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
+                //     context.Response.ContentType = "text/html; charset=utf-8";
+                //     await context.Response.WriteAsync(getWordsAsync());
+                // });
 
             });
         }
 
+        // public string getWordsAsync()
+        // {
+        //     Dictionary<string, string[]>.KeyCollection keyColl = DataBase.localMap.Keys;
 
-        private async void getSentenceAsync()
-        {
-            await getWordsAsync();
-        }
+        //     Word sentences;
 
-        private async Task getWordsAsync()
-        {
-            Dictionary<string, string[]>.KeyCollection keyColl = localMap.Keys;
+        //     foreach (string key in keyColl)
+        //     {
+        //         sentences = doRequestAsync($"{Sentence.randomStrValue(incampUrls)}{key}").Result;
+        //         Console.WriteLine(sentences);
+        //     }
+        //     return "";
+        // }
 
-            string sentences = null;
+        // public async Task<Word> doRequestAsync(string urlForRequest)
+        // {
+        //     string responseFromServer;
+        //     string header;
 
-            foreach (string key in keyColl)
-            {
-                sentences += await doRequestAsync($"{randomStrValue(incampUrls)}{key}");
-            }
-            Console.WriteLine(sentences);
-        }
+        //     try
+        //     {
+        //         WebRequest request = (HttpWebRequest)WebRequest.Create(urlForRequest);
 
-        public async Task<string> doRequestAsync(string urlForRequest)
-        {
-            string responseFromServer;
-            string header;
+        //         using (WebResponse response = await request.GetResponseAsync())
+        //         {
+        //             using (Stream responseStream = response.GetResponseStream())
+        //             {
+        //                 Stream dataStream = response.GetResponseStream();
 
-            try
-            {
-                WebRequest request = (HttpWebRequest)WebRequest.Create(urlForRequest);
+        //                 StreamReader reader = new StreamReader(dataStream);
 
-                using (WebResponse response = await request.GetResponseAsync())
-                {
-                    using (Stream responseStream = response.GetResponseStream())
-                    {
-                        Stream dataStream = response.GetResponseStream();
+        //                 responseFromServer = await reader.ReadToEndAsync();
+        //                 header = response.Headers.Get("InCamp-Student");
+        //             }
+        //         }
 
-                        StreamReader reader = new StreamReader(dataStream);
+        //         // WebResponse  response = (HttpWebRequest)request.GetResponseAsync();
 
-                        responseFromServer = await reader.ReadToEndAsync();
-                        header = response.Headers.Get("InCamp-Student");
-                    }
-                }
+        //         return new Word (urlForRequest, header, responseFromServer);
+        //     }
+        //     catch (WebException e)
+        //     {
+        //         Console.WriteLine("This program is expected to throw WebException on successful run." +
+        //                             "\n\nException Message :" + e.Message);
+        //         if (e.Status == WebExceptionStatus.ProtocolError)
+        //         {
+        //             Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
+        //             Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
+        //         }
 
-                // WebResponse  response = (HttpWebRequest)request.GetResponseAsync();
+        //         return new Word (null, null, null);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         Console.WriteLine(e.Message);
 
-                return header + responseFromServer;
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine("This program is expected to throw WebException on successful run." +
-                                    "\n\nException Message :" + e.Message);
-                if (e.Status == WebExceptionStatus.ProtocolError)
-                {
-                    Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
-                    Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
-                }
-
-                return null;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-
-                return null;
-            }
-        }
+        //         return new Word (null, null, null);
+        //     }
+        // }
 
     }
 }

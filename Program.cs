@@ -13,8 +13,10 @@ namespace first_web_server
 {
     public class Program
     {
+        public static string[] keys;
         public static void Main(string[] args)
         {
+            keys = args;
             CreateHostBuilder(args).Build().Run();
         }
 
