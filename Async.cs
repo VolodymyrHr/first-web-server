@@ -3,31 +3,27 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace first_web_server{
-    class Async : Common, ITypeRequest{
+namespace first_web_server
+{
+    class Async : Common, ITypeRequest
+    {
 
         public async Task<Dictionary<string, string>> getIncampSentenceAsync(string[] urls, Dictionary<string, string[]>.KeyCollection keys)
         {
             Dictionary<string, string> requestList = new Dictionary<string, string>();
-           
-            Task<Word> who = Task.Run(() =>
-            {
-                return Word.doRequest($"{urls[0]}who");
-            });
-            Task<Word> how = Task.Run(() =>
-            {
-                return Word.doRequest($"{urls[1]}how");
-            });
-            Task<Word> does = Task.Run(() =>
-            {
-                return Word.doRequest($"{urls[2]}does");
-            });
-            Task<Word> what = Task.Run(() =>
-            {
-                return Word.doRequest($"{urls[3]}what");
-            });
+            List<Task<Word>> tasks = new List<Task<Word>>();
 
-            Word[] words = await Task.WhenAll(who, how, does, what);
+            int i = 0;
+            foreach (string key in keys)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    return Word.doRequest($"{urls[i++]}{key}");
+                }
+                ));
+            }
+
+            Word[] words = await Task.WhenAll(tasks);
 
             foreach (Word item in words)
             {

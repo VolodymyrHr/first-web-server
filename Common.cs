@@ -6,7 +6,7 @@ namespace first_web_server
 {
     abstract class Common
     {
-        public abstract Dictionary<string,string> doRequests(string[] urls, Dictionary<string, string[]>.KeyCollection keys);
+        public abstract Dictionary<string, string> doRequests(string[] urls, Dictionary<string, string[]>.KeyCollection keys);
         public string getIncampSentence(string[] urls)
         {
             Dictionary<string, string> requestList;
@@ -21,7 +21,8 @@ namespace first_web_server
             watch.Start();
 
             string[] urlsForRequest = new string[keyColl.Count];
-            for (int i=0; i<keyColl.Count; i++){
+            for (int i = 0; i < keyColl.Count; i++)
+            {
                 urlsForRequest[i] = Sentence.randomStrValue(urls);
             }
 
@@ -33,8 +34,8 @@ namespace first_web_server
 
             sentence = (requestList.Count > 0) ? Sentence.getSentence(requestList) : "Incamp18 не відповідає";
             report = (requestList.Count > 0) ? Sentence.getStrList(requestList, "Successful requests:") : "\nSuccessful requests: -";
-            runTime = $"\nRuntime: {time}"; 
-            
+            runTime = $"\nRuntime: {time}";
+
 
             return string.Concat(sentence, report, runTime);
         }

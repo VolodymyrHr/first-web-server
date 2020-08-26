@@ -28,7 +28,11 @@ namespace first_web_server{
 
             foreach (KeyValuePair<string, string> kvp in dataList)
             {
-                list += $"\nВід - {kvp.Key} отримали - {kvp.Value}";
+                if(kvp.Value == null){
+                    list += $"\nВід - {kvp.Key} отримали - 404";
+                }else{
+                    list += $"\nВід - {kvp.Key} отримали - {kvp.Value}";
+                }
             }
 
             return list;

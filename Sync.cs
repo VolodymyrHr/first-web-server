@@ -13,7 +13,7 @@ namespace first_web_server
             foreach (string key in keys)
             {
                 Word response = new Word(null, null, null);
-                response = Word.doRequest($"{urls[++i]}{key}");
+                response = Word.doRequest($"{urls[i++]}{key}");
                 requestList.Add(response.url + ": " + response.header, response.word);
             }
 

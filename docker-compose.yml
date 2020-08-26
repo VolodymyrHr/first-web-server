@@ -2,29 +2,23 @@ version: '3'
 
 services:
   service1:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: quote-server
     ports:
-      - "0.0.0.0:5051:3030"
+      - "5051:3030"
     networks:
       - my-network
 
   service2:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: quote-server
     ports:
-      - "0.0.0.0:6061:3030"
+      - "6061:3030"
     networks:
       - my-network
 
   service3:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: quote-server
     ports:
-      - "0.0.0.0:7071:3030"
+      - "7071:3030"
     networks:
       - my-network
 
