@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  service1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:5051:3030"
+    networks:
+      - my-network
+
+  service2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:6061:3030"
+    networks:
+      - my-network
+
+  service3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:7071:3030"
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    external: true

@@ -14,14 +14,20 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.IO;
-using System.Text;
+
 
 namespace first_web_server
 {
     public class Startup
     {
-        private static string[] incampUrls = new string[] { "http://localhost:5000/",
-                                                            "http://localhost:8084/" };
+        private char[] delimiterChars = {',', ' ', ';', '\t' };
+        private static string[] incampUrls = new string[] { "http://service1:3030/",
+                                                            "http://service2:3030/",
+                                                            "http://service3:3030/" };
+
+        private string[] getEnviromentVariables(){
+            return Environment.GetEnvironmentVariable("myurls").Split(delimiterChars);
+        }
 
 
         public string ChooseTypeRequest(string[] urls)
@@ -53,7 +59,7 @@ namespace first_web_server
                 endpoints.MapGet("/", async context =>
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
-                    await context.Response.WriteAsync("Hello :)");
+                    await context.Response.WriteAsync($"Hello, dear, friend :)");
                 });
 
                 endpoints.MapGet("/{way}", async context =>
@@ -86,7 +92,7 @@ namespace first_web_server
                 {
                     context.Response.Headers.Add("InCamp-Student", "VolodymyrHR");
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(ChooseTypeRequest(incampUrls));
+                    await context.Response.WriteAsync(ChooseTypeRequest((getEnviromentVariables().Length > 0)?getEnviromentVariables():incampUrls));
                 });
 
                 // endpoints.MapGet("/async", async context =>

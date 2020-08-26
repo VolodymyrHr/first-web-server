@@ -4,33 +4,27 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace first_web_server{
-    class Async : ITypeRequest{
+    class Async : Common, ITypeRequest{
 
-        public async Task<string> getIncampSentenceAsync(string[] urls)
+        public async Task<Dictionary<string, string>> getIncampSentenceAsync(string[] urls, Dictionary<string, string[]>.KeyCollection keys)
         {
             Dictionary<string, string> requestList = new Dictionary<string, string>();
-
-            string sentence = null;
-            string runTime = null;
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            
+           
             Task<Word> who = Task.Run(() =>
             {
-                return Word.doRequest($"{Sentence.randomStrValue(urls)}who");
+                return Word.doRequest($"{urls[0]}who");
             });
             Task<Word> how = Task.Run(() =>
             {
-                return Word.doRequest($"{Sentence.randomStrValue(urls)}how");
+                return Word.doRequest($"{urls[1]}how");
             });
             Task<Word> does = Task.Run(() =>
             {
-                return Word.doRequest($"{Sentence.randomStrValue(urls)}does");
+                return Word.doRequest($"{urls[2]}does");
             });
             Task<Word> what = Task.Run(() =>
             {
-                return Word.doRequest($"{Sentence.randomStrValue(urls)}what");
+                return Word.doRequest($"{urls[3]}what");
             });
 
             Word[] words = await Task.WhenAll(who, how, does, what);
@@ -40,18 +34,12 @@ namespace first_web_server{
                 requestList.Add(item.url + ": " + item.header, item.word);
             }
 
-            watch.Stop();
-            TimeSpan ts = watch.Elapsed;
-            string time = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-            
-            sentence = (requestList.Count > 0) ? Sentence.getSentence(requestList) : "Incamp18 не відповідає";
-            runTime = $"\nRuntime: {time}"; 
-            
-            return string.Concat(sentence, runTime);
+            return requestList;
         }
-        public string getIncampSentence(string[] urls)
+
+        public override Dictionary<string, string> doRequests(string[] urls, Dictionary<string, string[]>.KeyCollection keys)
         {
-            return getIncampSentenceAsync(urls).Result;
+            return getIncampSentenceAsync(urls, keys).Result;
         }
     }
 }
